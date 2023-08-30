@@ -1,26 +1,60 @@
 // Import necessary decorators and modules from Nest.js
-import { Controller, UseGuards, Post, Body, Get } from '@nestjs/common';
+import {
+  Controller,
+  UseGuards,
+  Post,
+  Body,
+  Get,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 // Import the CollectionService and CreateCollectionDto from their respective files
 import { CollectionService } from './collection.service';
 import { CreateCollectionDto } from './dto/collection.dto';
-
+import { FileInterceptor } from '@nestjs/platform-express';
+import * as fs from 'fs';
+import * as path from 'path';
+import { CollectionEntity } from './entity/collection.entity';
 @Controller('collections') // Base route for this controller
-@UseGuards(AuthGuard()) // Protect this route with the AuthGuard
+// @UseGuards(AuthGuard()) // Protect this route with the AuthGuard
 export class CollectionController {
   constructor(private readonly collectionsService: CollectionService) {}
   // Constructor injection of the CollectionService to use its methods
 
   @Post('create') // HTTP POST request route: 'collections/create'
-  async createCollection(@Body() data: CreateCollectionDto): Promise<any> {
-    // Handler for creating a collection, expecting data in the request body
-    // Call the 'createCollection' method from the injected collectionsService
-    const collection = await this.collectionsService.createCollection(data);
-
-    // Return the created collection as the response
-    return collection;
+  @UseInterceptors(FileInterceptor('image'))
+  async createCollection(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() createCollectionDto: CreateCollectionDto,
+  ) {
+    try {
+      // Save the image to a local folder
+      const uploadPath = path.join(
+        __dirname,
+        '..',
+        'uploads',
+        file.originalname,
+      );
+      fs.writeFileSync(uploadPath, file.buffer);
+  
+      // Save the image information to the database
+      const collection = new CollectionEntity();
+      collection.name = createCollectionDto.name;
+      collection.description = createCollectionDto.description;
+      collection.image = fs.readFileSync(uploadPath); // Store the binary data directly
+      collection.contractAddress = createCollectionDto.contractAddress;
+  
+      await this.collectionsService.createCollection(collection);
+  
+      return { message: 'Image uploaded and saved successfully' };
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw new Error('Error uploading image');
+    }
   }
+  
 
   // Route to get all collections
   @Get('all') // HTTP GET request route: 'collections/all'

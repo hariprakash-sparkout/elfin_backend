@@ -14,7 +14,7 @@ export class CollectionService {
 
   // Method to create a new collection
   async createCollection(
-    createCollectionDto: CreateCollectionDto,
+    createCollectionDto: any,
   ): Promise<any> {
     try {
       // Attempt to create the collection

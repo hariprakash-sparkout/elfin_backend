@@ -13,8 +13,8 @@ export class CollectionEntity {
   @Column()
   description: string;
 
-  @Column()
-  image: string;
+  @Column('blob', { nullable: true })
+  image: Buffer; // Use 'blob' and Buffer for binary data
 
   @Column()
   contractAddress: string;

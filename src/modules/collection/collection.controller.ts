@@ -7,57 +7,59 @@ import {
   Get,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 // Import the CollectionService and CreateCollectionDto from their respective files
 import { CollectionService } from './collection.service';
-import { CreateCollectionDto } from './dto/collection.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
-import * as fs from 'fs';
-import * as path from 'path';
-import { CollectionEntity } from './entity/collection.entity';
+
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { UpdateEnableDto } from './dto/collection.dto';
+
 @Controller('collections') // Base route for this controller
 // @UseGuards(AuthGuard()) // Protect this route with the AuthGuard
 export class CollectionController {
   constructor(private readonly collectionsService: CollectionService) {}
   // Constructor injection of the CollectionService to use its methods
 
-  @Post('create') // HTTP POST request route: 'collections/create'
+  // POST endpoint to create a collection
+  @Post('create')
   @UseInterceptors(FileInterceptor('image'))
-  async createCollection(
-    @UploadedFile() file: Express.Multer.File,
-    @Body() createCollectionDto: CreateCollectionDto,
-  ) {
+  async uploadCollection(
+    @UploadedFile() image: Express.Multer.File,
+    @Body()
+    body: { name: string; description: string; contractAddress: string },
+  ):Promise<any> {
     try {
-      // Save the image to a local folder
-      const uploadPath = path.join(
-        __dirname,
-        '..',
-        'uploads',
-        file.originalname,
-      );
-      fs.writeFileSync(uploadPath, file.buffer);
-  
-      // Save the image information to the database
-      const collection = new CollectionEntity();
-      collection.name = createCollectionDto.name;
-      collection.description = createCollectionDto.description;
-      collection.image = fs.readFileSync(uploadPath); // Store the binary data directly
-      collection.contractAddress = createCollectionDto.contractAddress;
-  
-      await this.collectionsService.createCollection(collection);
-  
-      return { message: 'Image uploaded and saved successfully' };
+      // Check if the image file is missing
+      if (!image) {
+        throw new BadRequestException('Image file is required');
+      }
+
+      // Call the collections service to save the collection
+      const savedCollection = await this.collectionsService.saveCollection({
+        ...body,
+        image: image.buffer,
+      });
+
+      // Return the saved collection as a response
+      return {
+        message: 'Collection created successfully',
+        collection: savedCollection,
+      };
     } catch (error) {
-      console.error('Error uploading image:', error);
-      throw new Error('Error uploading image');
+      // Handle any errors and return an appropriate response
+      return {
+        error: 'Failed to create collection',
+        message: error.message,
+      };
     }
   }
-  
 
   // Route to get all collections
-  @Get('all') // HTTP GET request route: 'collections/all'
+  @Get('/all') // HTTP GET request route: 'collections/all'
   async getAllCollection(): Promise<any> {
     try {
       // Fetch all collections using the 'getAllCollections' method from the service
@@ -68,6 +70,29 @@ export class CollectionController {
     } catch (error) {
       // Handle the error if something goes wrong during collection retrieval
       throw new Error('An error occurred while fetching collections.');
+    }
+  }
+
+  // POST endpoint to enable/disable a collection
+  @Post('/update-enable')
+  async isEnable(@Body() data: UpdateEnableDto):Promise<any> {
+    try {
+      // Call the collections service to change the isEnable value
+      const updatedCollection = await this.collectionsService.changeIsEnable(
+        data,
+      );
+
+      // Return the updated collection as a response
+      return {
+        message: 'Collection isEnable status updated successfully',
+        collection: updatedCollection,
+      };
+    } catch (error) {
+      // Handle any errors and return an appropriate response
+      return {
+        error: 'Failed to update isEnable status',
+        message: error.message,
+      };
     }
   }
 }

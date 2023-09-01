@@ -12,31 +12,6 @@ export class CollectionService {
     private readonly collectionRepository: Repository<CollectionEntity>,
   ) {}
 
-  // Method to create a new collection
-  async createCollection(
-    createCollectionDto: any,
-  ): Promise<any> {
-    try {
-      // Attempt to create the collection
-      const newCollection = await this.collectionRepository.create(createCollectionDto);
-      return await this.collectionRepository.save(newCollection);
-    } catch (error) {
-      // Check if the error is a duplicate entry error
-      if (error instanceof QueryFailedError && error.message.includes('UNIQUE constraint failed')) {
-        const match = error.message.match(/UNIQUE constraint failed: (.+)/);
-        if (match && match[1]) {
-          const columns = match[1].split(', ');
-          const columnNames = columns.map((col) => col.split('.')[1]); // Extract column names
-          throw new ConflictException(`Duplicate entry. The combination of ${columnNames.join(' and ')} already exists.`);
-        }
-      }
-      // Handle other errors here
-      throw error;
-    }
-
-  }
-  
-
   // Method to get all collections
   async getAllCollections(): Promise<CollectionEntity[]> {
     try {
@@ -46,5 +21,57 @@ export class CollectionService {
       // Handle the error if something goes wrong during collection retrieval
       throw new Error('An error occurred while fetching collections.');
     }
+  }
+  /**
+   * Save a new collection to the database.
+   *
+   * @param data - An object containing collection data.
+   * @returns A Promise that resolves to the saved CollectionEntity.
+   */
+  async saveCollection(data: {
+    name: string;
+    description: string;
+    contractAddress: string;
+    image: Buffer;
+  }): Promise<CollectionEntity> {
+    // Create a new instance of the CollectionEntity
+    const collection = new CollectionEntity();
+
+    // Set the properties of the collection from the input data
+    collection.name = data.name;
+    collection.description = data.description;
+    collection.contractAddress = data.contractAddress;
+    collection.image = data.image;
+
+    // Save the collection entity to the database and return the result
+    return await this.collectionRepository.save(collection);
+  }
+
+  /**
+   * Change the 'isEnable' property of a collection by its ID.
+   *
+   * @param data - An object containing collection ID and new 'isEnabled' value.
+   * @returns A Promise that resolves to the updated CollectionEntity.
+   * @throws Error if the collection with the given ID is not found.
+   */
+  async changeIsEnable(data: any): Promise<CollectionEntity> {
+    // Extract 'id' and 'isEnabled' values from the input data
+    const { id, isEnabled } = data;
+
+    // Find the collection by its ID
+    const collectionToUpdate = await this.collectionRepository.findOne({
+      where: { id },
+    });
+
+    if (!collectionToUpdate) {
+      // Throw an error if the collection with the specified ID is not found
+      throw new Error(`Collection with ID ${id} not found`);
+    }
+
+    // Update the 'isEnable' property
+    collectionToUpdate.isEnable = isEnabled;
+
+    // Save the updated collection
+    return await this.collectionRepository.save(collectionToUpdate);
   }
 }

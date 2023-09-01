@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {  UserEntity } from './entity/auth.entity';
+import { UserEntity } from './entity/auth.entity';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
@@ -18,13 +18,13 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-   /**
+  /**
    * Registers a new user with the provided username and password.
    * @param username The desired username for the new user.
    * @param password The password for the new user.
    * @returns The created user entity.
    */
-   async register(username: string, password: string): Promise<RegisterDto> {
+  async register(username: string, password: string): Promise<RegisterDto> {
     // Check if a user with the same username already exists
     const existingUser = await this.userRepository.findOne({
       where: { username },
@@ -43,7 +43,6 @@ export class AuthService {
     // Save the new user
     return await this.userRepository.save(newUser);
   }
-
 
   /**
    * Logs in a user with the provided username and password.
@@ -76,24 +75,40 @@ export class AuthService {
     return this.responseData(data);
   }
 
-/**
- * Validates a JWT user based on the payload.
- * @param payload The payload of the JWT token.
- * @returns The user entity associated with the payload.
- */
-async validateJwtUser(payload: any) {
-  const userId = payload.sub;
-  const user = await this.userRepository.findOne({where:{ id: userId }}); // Use findOne with 'where'
+  /**
+   * Validates a JWT user based on the payload.
+   * @param payload The payload of the JWT token.
+   * @returns The user entity associated with the payload.
+   */
+  async validateJwtUser(payload: any) {
+    const userId = payload.sub;
+    const user = await this.userRepository.findOne({ where: { id: userId } }); // Use findOne with 'where'
 
-  if (!user) {
-    throw new UnauthorizedException('Invalid user');
+    if (!user) {
+      throw new UnauthorizedException('Invalid user');
+    }
+
+    return user;
   }
 
-  return user;
-}
-  
-  
-  
+  async validateToken(data: any): Promise<any> {
+    let { token } = data;
+    try {
+      // Verify the token's signature
+      const decodedToken = this.jwtService.verify(token);
+
+      // You can also check the token's expiration here if needed
+      // const isTokenExpired = Date.now() >= decodedToken.exp * 1000;
+
+      // Perform additional checks like token revocation if necessary
+
+      return decodedToken;
+    } catch (error) {
+      // Token validation failed
+      throw new UnauthorizedException('Invalid token');
+    }
+  }
+
   /**
    * Constructs a response data object with the provided access token and message.
    * @param _data The data to be included in the response.

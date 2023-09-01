@@ -1,4 +1,4 @@
-import { IsNotEmpty,IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty,IsNumber,IsString, isBoolean } from 'class-validator';
 
 
 export class CreateCollectionDto {
@@ -15,4 +15,15 @@ export class CreateCollectionDto {
 
   @IsNotEmpty()
   contractAddress: string;
+}
+
+export class UpdateEnableDto{
+
+  @IsNotEmpty()
+  @IsNumber()
+  id:number
+
+  @IsNotEmpty()
+  @IsBoolean()
+  isEnable:boolean
 }

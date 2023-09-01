@@ -4,12 +4,13 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
-@Controller('auth')
+@Controller('')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
   async register(@Body() body: RegisterDto): Promise<any> {
+    console.log(body);
     const { username, password } = body;
     return await this.authService.register(username, password);
   }
@@ -19,5 +20,11 @@ export class AuthController {
     const { username, password } = body;
     const data = await this.authService.login(username, password);
     return data;
+  }
+
+  @Post('validate')
+  async validateToken(@Body() data: any): Promise<any> {
+    console.log(data)
+    return this.authService.validateToken(data);
   }
 }

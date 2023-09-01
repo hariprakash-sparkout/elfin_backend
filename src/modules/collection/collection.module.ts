@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { CollectionController } from './collection.controller';
+import { CollectionController, UserCollectionController } from './collection.controller';
 import { CollectionService } from './collection.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CollectionEntity } from './entity/collection.entity';
@@ -17,7 +17,7 @@ require("dotenv").config();
     secret:env.JWT_SECRET,
     signOptions: { expiresIn: '1h' },
   }),],
-  controllers: [CollectionController],
+  controllers: [CollectionController,UserCollectionController],
   providers: [CollectionService]
 })
 export class CollectionModule {}

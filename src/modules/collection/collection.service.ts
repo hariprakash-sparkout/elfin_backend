@@ -56,7 +56,8 @@ export class CollectionService {
    */
   async changeIsEnable(data: any): Promise<CollectionEntity> {
     // Extract 'id' and 'isEnabled' values from the input data
-    const { id, isEnabled } = data;
+    const { id, isEnable } = data;
+    console.log(data)
 
     // Find the collection by its ID
     const collectionToUpdate = await this.collectionRepository.findOne({
@@ -69,7 +70,7 @@ export class CollectionService {
     }
 
     // Update the 'isEnable' property
-    collectionToUpdate.isEnable = isEnabled;
+    collectionToUpdate.isEnable = isEnable;
 
     // Save the updated collection
     return await this.collectionRepository.save(collectionToUpdate);

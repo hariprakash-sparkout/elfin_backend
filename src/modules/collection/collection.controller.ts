@@ -9,6 +9,7 @@ import {
   UploadedFile,
   UploadedFiles,
   BadRequestException,
+  NotAcceptableException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -19,7 +20,7 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UpdateEnableDto } from './dto/collection.dto';
 
 @Controller('collections') // Base route for this controller
-// @UseGuards(AuthGuard()) // Protect this route with the AuthGuard
+@UseGuards(AuthGuard()) // Protect this route with the AuthGuard
 export class CollectionController {
   constructor(private readonly collectionsService: CollectionService) {}
   // Constructor injection of the CollectionService to use its methods
@@ -31,7 +32,7 @@ export class CollectionController {
     @UploadedFile() image: Express.Multer.File,
     @Body()
     body: { name: string; description: string; contractAddress: string },
-  ):Promise<any> {
+  ): Promise<any> {
     try {
       // Check if the image file is missing
       if (!image) {
@@ -51,31 +52,14 @@ export class CollectionController {
       };
     } catch (error) {
       // Handle any errors and return an appropriate response
-      return {
-        error: 'Failed to create collection',
-        message: error.message,
-      };
-    }
-  }
 
-  // Route to get all collections
-  @Get('/all') // HTTP GET request route: 'collections/all'
-  async getAllCollection(): Promise<any> {
-    try {
-      // Fetch all collections using the 'getAllCollections' method from the service
-      const collections = await this.collectionsService.getAllCollections();
-
-      // Return the fetched collections as the response
-      return collections;
-    } catch (error) {
-      // Handle the error if something goes wrong during collection retrieval
-      throw new Error('An error occurred while fetching collections.');
+      throw new NotAcceptableException(error.message);
     }
   }
 
   // POST endpoint to enable/disable a collection
-  @Post('/update-enable')
-  async isEnable(@Body() data: UpdateEnableDto):Promise<any> {
+  @Post('update-enable')
+  async isEnable(@Body() data: UpdateEnableDto): Promise<any> {
     try {
       // Call the collections service to change the isEnable value
       const updatedCollection = await this.collectionsService.changeIsEnable(
@@ -89,10 +73,28 @@ export class CollectionController {
       };
     } catch (error) {
       // Handle any errors and return an appropriate response
-      return {
-        error: 'Failed to update isEnable status',
-        message: error.message,
-      };
+
+      throw new NotAcceptableException(error.message);
+    }
+  }
+}
+@Controller('collections') // Base route for this controllery
+export class UserCollectionController {
+  constructor(private readonly collectionsService: CollectionService) {}
+  // Constructor injection of the CollectionService to use its methods
+
+  // Route to get all collections
+  @Get('/all') // HTTP GET request route: 'collections/all'
+  async getAllCollection(): Promise<any> {
+    try {
+      // Fetch all collections using the 'getAllCollections' method from the service
+      const collections = await this.collectionsService.getAllCollections();
+
+      // Return the fetched collections as the response
+      return collections;
+    } catch (error) {
+      // Handle the error if something goes wrong during collection retrieval
+      throw new Error(error?.message);
     }
   }
 }

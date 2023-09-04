@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CollectionEntity } from './entity/collection.entity';
 import { QueryFailedError, Repository } from 'typeorm';
@@ -57,7 +61,7 @@ export class CollectionService {
   async changeIsEnable(data: any): Promise<CollectionEntity> {
     // Extract 'id' and 'isEnabled' values from the input data
     const { id, isEnable } = data;
-    console.log(data)
+    console.log(data);
 
     // Find the collection by its ID
     const collectionToUpdate = await this.collectionRepository.findOne({
@@ -71,6 +75,72 @@ export class CollectionService {
 
     // Update the 'isEnable' property
     collectionToUpdate.isEnable = isEnable;
+
+    // Save the updated collection
+    return await this.collectionRepository.save(collectionToUpdate);
+  }
+
+  // Function to get a collection by contract address
+  async getCollectionByAddress(
+    contractAddress: string,
+  ): Promise<CollectionEntity> {
+    // Find the collection by its address
+    const collection = await this.collectionRepository.findOne({
+      where: { contractAddress },
+    });
+
+    if (!collection) {
+      // If the collection was not found, throw a NotFoundException
+      throw new NotFoundException(
+        `Collection with contract address ${contractAddress} not found`,
+      );
+    }
+
+    return collection;
+  }
+
+  // Function to delete a collection by ID
+  async deleteCollectionById(
+    id: number,
+  ): Promise<CollectionEntity | undefined> {
+    // Find the collection by ID
+    const collectionToDelete = await this.collectionRepository.findOne({
+      where: { id },
+    });
+
+    if (!collectionToDelete) {
+      // If the collection was not found, throw a NotFoundException
+      throw new NotFoundException(`Collection with ID ${id} not found`);
+    }
+
+    // Delete the collection
+    await this.collectionRepository.remove(collectionToDelete);
+
+    // Return the deleted collection
+    return collectionToDelete;
+  }
+
+  async updateCollection(
+    id: number,
+    data: { name?: string; description?: string; contractAddress?: string },
+  ): Promise<CollectionEntity | undefined> {
+    // Find the collection by its ID
+    const collectionToUpdate = await this.collectionRepository.findOne({where: { id }});
+
+    if (!collectionToUpdate) {
+      return undefined; // Collection not found
+    }
+
+    // Update the collection properties
+    if (data.name) {
+      collectionToUpdate.name = data.name;
+    }
+    if (data.description) {
+      collectionToUpdate.description = data.description;
+    }
+    if (data.contractAddress) {
+      collectionToUpdate.contractAddress = data.contractAddress;
+    }
 
     // Save the updated collection
     return await this.collectionRepository.save(collectionToUpdate);

@@ -27,3 +27,17 @@ export class UpdateEnableDto{
   @IsBoolean()
   isEnable:boolean
 }
+
+export class DeleteCollectionDto{
+
+  @IsNotEmpty()
+  @IsNumber()
+  id:number
+}
+
+export interface UpdateCollectionDto {
+  id: number;
+  name?: string;
+  description?: string;
+  contractAddress?: string;
+}

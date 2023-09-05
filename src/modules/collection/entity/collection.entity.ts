@@ -24,7 +24,7 @@ export class CollectionEntity {
   @Column('blob', { nullable: true })
   image: Buffer;
 
-  @Column()
+  @Column({ unique: true })
   @IsNotEmpty({ message: 'Contract Address cannot be empty' })
   contractAddress: string;
 

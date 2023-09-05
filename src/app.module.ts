@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { CollectionModule } from './modules/collection/collection.module';
 
 
+
 @Module({
   imports: [ TypeOrmModule.forRoot({
     type: 'sqlite',

@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
-
+import Moralis from "moralis";
+import { EvmChain } from "@moralisweb3/common-evm-utils";
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'Hello World!';
+  async getHello() {
+   
+    return 'Hello world'
   }
 }

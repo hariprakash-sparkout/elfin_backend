@@ -20,7 +20,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { CollectionService } from './collection.service';
 
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { DeleteCollectionDto, UpdateCollectionDto, UpdateEnableDto } from './dto/collection.dto';
+import {
+  DeleteCollectionDto,
+  UpdateCollectionDto,
+  UpdateEnableDto,
+} from './dto/collection.dto';
 
 @Controller('collections') // Base route for this controller
 @UseGuards(AuthGuard()) // Protect this route with the AuthGuard
@@ -105,14 +109,15 @@ export class CollectionController {
   }
 
   @Post('/update')
-  async updateCollection(
-    @Body() body:UpdateCollectionDto,
-  ): Promise<any> {
+  async updateCollection(@Body() body: UpdateCollectionDto): Promise<any> {
     try {
       const { id, ...updateData } = body;
 
       // Call the collections service to update the collection
-      const updatedCollection = await this.collectionsService.updateCollection(id, updateData);
+      const updatedCollection = await this.collectionsService.updateCollection(
+        id,
+        updateData,
+      );
 
       if (!updatedCollection) {
         throw new NotFoundException(`Collection with ID ${id} not found`);
@@ -165,7 +170,22 @@ export class UserCollectionController {
       console.error('Error while fetching collection details:', error);
 
       // Return an error response
-      throw new NotFoundException('No Pools found')
+      throw new NotFoundException('No Pools found');
+    }
+  }
+
+  @Post('/get-moralis')
+  async getMoralisData(@Body() data: any): Promise<any> {
+    try {
+      let { collectionAddress } = data;
+      const result = await this.collectionsService.getMoralisData(
+        collectionAddress,
+      );
+      return result;
+    } catch (error) {
+      // Handle the error here
+      console.error('An error occurred:', error);
+      throw error; // You can rethrow the error or handle it as needed
     }
   }
 }
